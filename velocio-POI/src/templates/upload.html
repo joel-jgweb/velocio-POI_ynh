@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Velocio Traces & Spots - Import GPX</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icon.ico') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+            padding: 38px 36px 28px 36px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 18px auto;
+            width: 120px;
+            height: auto;
+        }
+        h1 {
+            color: #2352a0;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .file-input {
+            margin-bottom: 24px;
+        }
+        .submit-btn {
+            background: #2352a0;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 22px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(35,82,160,0.13);
+            transition: background 0.2s;
+        }
+        .submit-btn:hover {
+            background: #14335e;
+        }
+        .infos {
+            color: #2352a0;
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 1.09em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Velocio_POI" class="logo" />
+        <h1>Importez votre trace GPX</h1>
+        <div class="infos">
+            Rayon de recherche : <strong>{{ radius }} m</strong><br>
+            Types de POI sélectionnés :
+            {% for label in selected_labels %}
+                <span>{{ label }}</span>{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="file-input">
+                <input type="file" name="gpxfile" accept=".gpx" required>
+            </div>
+            <button type="submit" class="submit-btn">Trouver les POI</button>
+        </form>
+    </div>
+</body>
+</html>

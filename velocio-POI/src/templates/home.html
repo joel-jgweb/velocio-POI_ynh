@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vélocio Traces & Spots - Accueil</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icon.ico') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 750px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+            padding: 38px 36px 28px 36px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 18px auto;
+            width: 120px;
+            height: auto;
+        }
+        h1 {
+            color: #2352a0;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        form {
+            margin-top: 18px;
+        }
+        .radius-input {
+            margin-bottom: 18px;
+        }
+        .category-title {
+            font-weight: bold;
+            color: #2352a0;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            font-size: 1.11em;
+        }
+        .poi-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .poi-list {
+            flex: 1 1 220px;
+            min-width: 180px;
+            background: #e3eafd;
+            border-radius: 10px;
+            padding: 8px 12px 8px 12px;
+        }
+        .poi-type {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.97em;
+        }
+        .submit-btn {
+            background: #2352a0;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 22px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(35,82,160,0.13);
+            transition: background 0.2s;
+            margin-top: 16px;
+        }
+        .submit-btn:hover {
+            background: #14335e;
+        }
+        @media (max-width: 700px) {
+            .container { max-width: 98vw; padding: 14px; }
+            .poi-columns { flex-direction: column; gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Velocio_POI" class="logo" />
+        <h1>Choisir les points d'Intérêt à rechercher</h1>
+        <form method="POST">
+            <div class="radius-input">
+                <label for="radius">Rayon de recherche autour de la trace (mètres):</label>
+                <input type="number" id="radius" name="radius" value="500" min="50" max="5000" step="10" />
+            </div>
+            <div class="poi-columns">
+                {% for category in grouped_pois %}
+                    <div class="poi-list">
+                        <div class="category-title">{{ category.title }}</div>
+                        {% for poi in category["items"] %}
+                            <label class="poi-type">
+                                <input type="checkbox" name="poi_types" value="{{ poi.index }}">
+                                {{ poi.label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="submit-btn">Choisir la trace GPX</button>
+        </form>
+    </div>
+</body>
+</html>

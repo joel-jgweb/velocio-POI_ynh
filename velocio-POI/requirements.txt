@@ -1,0 +1,8 @@
+flask
+gpxpy
+shapely
+folium
+requests
+lxml
+geopy
+pytest
