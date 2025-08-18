@@ -1,0 +1,13 @@
+#!/bin/bash
+# scripts/remove
+
+app=$1
+rm -rf "/var/www/$app"
+systemctl stop uwsgi-app@$app || true
+systemctl disable uwsgi-app@$app || true
+rm -f "/etc/uwsgi/apps-available/$app.ini"
+rm -f "/etc/uwsgi/apps-enabled/$app.ini"
+rm -f "/etc/nginx/conf.d/*/$app.conf"
+systemctl reload nginx
+
+echo "✅ App $app supprimée"

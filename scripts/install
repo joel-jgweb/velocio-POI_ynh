@@ -1,0 +1,10 @@
+#!/bin/bash
+app=$1
+final_path="/var/www/$app"
+git clone https://github.com/joel-jgweb/Velocio-POI.git "$final_path"
+python3 -m venv "$final_path/venv"
+source "$final_path/venv/bin/activate"
+pip install -r "$final_path/requirements.txt"
+mkdir -p /home/yunohost.app/.velocio_poi/{cache,output}
+chown -R yunohost.app:yunohost.app /home/yunohost.app/.velocio_poi "$final_path"
+echo "✅ Installé"
