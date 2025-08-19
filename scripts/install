@@ -1,30 +1,20 @@
 #!/bin/bash
 # scripts/install
 
-# Ne pas activer 'set -euo pipefail' tout de suite
-# On attend d'avoir les arguments
-
 app=$1
 domain=$2
 path=$3
 
-# Maintenant, on peut activer le mode strict
-set -euo pipefail
+# Ne pas activer set -euo pipefail tout de suite
+# On attend d'avoir les arguments
 
-# === S'assurer qu'on est dans le bon répertoire ===
+# === Aller dans le bon répertoire ===
 if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
     cd "$YNH_APP_BASEDIR" || {
         echo "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
         exit 1
     }
 fi
-
-# === Variables ===
-final_path="/var/www/$app"
-src_dir="$final_path/velocio-POI"
-
-# === Créer le dossier cible ===
-mkdir -p "$final_path"
 
 # === Vérifier que velocio-POI existe ===
 if [ ! -d "velocio-POI" ]; then
@@ -34,12 +24,18 @@ if [ ! -d "velocio-POI" ]; then
     exit 1
 fi
 
+# === Variables ===
+final_path="/var/www/$app"
+
+# === Créer le dossier cible ===
+mkdir -p "$final_path"
+
 # === Copier le code ===
-cp -r velocio-POI "$src_dir"
+cp -r velocio-POI "$final_path/"
 
 # === Aller dans le dossier de l'app ===
-cd "$src_dir" || {
-    echo "❌ Impossible d'accéder à $src_dir"
+cd "$final_path/velocio-POI" || {
+    echo "❌ Impossible d'accéder à $final_path/velocio-POI"
     exit 1
 }
 
