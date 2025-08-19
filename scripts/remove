@@ -2,12 +2,11 @@
 # scripts/remove
 
 app=$1
-rm -rf "/var/www/$app"
-systemctl stop uwsgi-app@$app || true
-systemctl disable uwsgi-app@$app || true
-rm -f "/etc/uwsgi/apps-available/$app.ini"
-rm -f "/etc/uwsgi/apps-enabled/$app.ini"
-rm -f "/etc/nginx/conf.d/*/$app.conf"
-systemctl reload nginx
 
-echo "✅ App $app supprimée"
+# Supprimer le dossier de l'app
+rm -rf "/var/www/$app"
+
+# Supprimer les données utilisateur
+rm -rf ~/.velocio_poi
+
+echo "🗑️ Velocio Traces & Spots désinstallé."

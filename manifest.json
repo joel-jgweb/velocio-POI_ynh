@@ -2,19 +2,17 @@
   "name": "Velocio Traces & Spots",
   "id": "velocio_ynh",
   "description": "Recherche de POI OpenStreetMap autour d'une trace GPX",
-  "description_fr": "Trouvez restaurants, hébergements, services vélo, etc. autour de votre parcours",
   "version": "1.0.0~ynh1",
   "maintainer": {
     "name": "joel-jgweb",
-    "email": "ton-email@domaine.tld"
+    "email": "ton-email@ton-domaine.tld"
   },
   "urls": {
-    "code": "https://github.com/joel-jgweb/velocio-POI_ynh"
+    "code": "https://github.com/joel-jgweb/Velocio-POI"
   },
   "requirements": {
     "yunohost": ">= 4.0"
   },
   "multi_instance": true,
-  "services": ["nginx", "uwsgi"],
-  "license": "GPL-3"
+  "services": ["nginx", "uwsgi"]
 }

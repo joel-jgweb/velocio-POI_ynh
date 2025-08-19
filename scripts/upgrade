@@ -1,14 +1,6 @@
 #!/bin/bash
-# scripts/upgrade
 
-app=$1
-cd "/var/www/$app" || exit 1
-
-git pull origin main
-source venv/bin/activate
-pip install -r requirements.txt
-
-systemctl reload nginx
-systemctl restart uwsgi-app@$app
-
-echo "✅ Mise à jour terminée"
+ynh_script_progression --message="Mise à jour de l'application"
+# Ici tu pourrais faire un git pull ou recopier la nouvelle version
+cp -r velocio-POI/* /var/www/velocio-poi
+ynh_script_progression --message="Mise à jour terminée"

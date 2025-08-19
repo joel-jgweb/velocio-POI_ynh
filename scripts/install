@@ -1,10 +1,33 @@
 #!/bin/bash
+# scripts/install
+
 app=$1
+domain=$2
+path=$3
+
+# Chemin d'installation
 final_path="/var/www/$app"
-git clone https://github.com/joel-jgweb/Velocio-POI.git "$final_path"
-python3 -m venv "$final_path/venv"
-source "$final_path/venv/bin/activate"
-pip install -r "$final_path/requirements.txt"
-mkdir -p /home/yunohost.app/.velocio_poi/{cache,output}
-chown -R yunohost.app:yunohost.app /home/yunohost.app/.velocio_poi "$final_path"
-echo "✅ Installé"
+mkdir -p "$final_path"
+
+# Copie le code source
+cp -r velocio-POI "$final_path/"
+
+# Dossier de l'app
+cd "$final_path/velocio-POI" || exit 1
+
+# Créer l'environnement virtuel
+python3 -m venv venv
+source venv/bin/activate
+
+# Installer les dépendances
+pip install -r requirements.txt
+
+# Créer les dossiers utilisateur
+mkdir -p ~/.velocio_poi/cache
+mkdir -p ~/.velocio_poi/output
+mkdir -p uploads
+
+# Rendre exécutable
+chmod +x src/server.py
+
+echo "✅ Velocio Traces & Spots installé avec succès !"

@@ -1,0 +1,17 @@
+[uwsgi]
+project = velocio-poi
+base = /var/www/%(project)
+venv = %(base)/venv
+chdir = %(base)/src
+module = server:app
+master = true
+processes = 2
+socket = /run/uwsgi/app/%(project)/uwsgi.sock
+chmod-socket = 660
+vacuum = true
+die-on-term = true
+uid = yunohost.app
+gid = yunohost.app
+plugin = python3
+venv = %(base)/venv
+# logto = /var/log/uwsgi/%(project).log
