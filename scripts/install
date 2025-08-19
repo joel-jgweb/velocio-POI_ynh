@@ -5,7 +5,7 @@ app=$1
 domain=$2
 path=$3
 
-# === S'assurer qu'on est dans le bon répertoire ===
+# === Aller dans le bon répertoire ===
 if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
     cd "$YNH_APP_BASEDIR" || {
         echo "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
