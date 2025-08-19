@@ -1,11 +1,53 @@
 {
   "name": "Velocio Traces & Spots",
-  "id": "velocio_ynh",
-  "description": "Recherche de POI OpenStreetMap autour d'une trace GPX",
-  "version": "1.0.0~ynh1",
-  "maintainer": { ... },
-  "urls": { ... },
-  "requirements": { "yunohost": ">= 4.0" },
+  "id": "velocio-ynh",
+  "packaging_format": 1,
+  "description": {
+    "en": "Find POI around a GPX track using OpenStreetMap",
+    "fr": "Trouvez des POI autour d'une trace GPX avec OpenStreetMap"
+  },
+  "version": "1.0.1~ynh1",
+  "url": "https://github.com/joel-jgweb/velocio-POI",
+  "author": "joel-jgweb",
+  "license": "GPL-3.0",
+  "requirements": {
+    "yunohost": ">= 4.0"
+  },
   "multi_instance": true,
-  "services": ["nginx", "uwsgi"]
+  "services": [
+    "nginx",
+    "uwsgi"
+  ],
+  "arguments": {
+    "install": [
+      {
+        "name": "domain",
+        "type": "domain",
+        "ask": {
+          "en": "On which domain do you want to deploy the app?",
+          "fr": "Sur quel domaine voulez-vous déployer l'application ?"
+        },
+        "example": "exemple.org"
+      },
+      {
+        "name": "path",
+        "type": "path",
+        "ask": {
+          "en": "Under which path do you want to access the app?",
+          "fr": "Sous quel chemin voulez-vous accéder à l'application ?"
+        },
+        "default": "/velocio",
+        "example": "/velocio"
+      },
+      {
+        "name": "is_public",
+        "type": "boolean",
+        "ask": {
+          "en": "Should the app be open to everyone?",
+          "fr": "L'application doit-elle être ouverte à tous ?"
+        },
+        "default": "1"
+      }
+    ]
+  }
 }
