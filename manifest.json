@@ -1,13 +1,13 @@
 {
   "name": "Velocio Traces & Spots",
-  "id": "velocio-ynh",
+  "id": "velocio-poi-ynh",
   "packaging_format": 1,
   "description": {
     "en": "Find POI around a GPX track using OpenStreetMap",
     "fr": "Trouvez des POI autour d'une trace GPX avec OpenStreetMap"
   },
   "version": "1.0.1~ynh1",
-  "url": "https://github.com/joel-jgweb/velocio-POI",
+  "url": "https://github.com/joel-jgweb/Velocio-POI",
   "author": "joel-jgweb",
   "license": "GPL-3.0",
   "requirements": {
