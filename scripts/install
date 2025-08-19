@@ -1,75 +1,74 @@
 #!/bin/bash
 
-# Charger les helpers YunoHost
+# 🔥 Charger les helpers YunoHost (OBLIGATOIRE)
 source /usr/share/yunohost/helpers || {
-    echo "❌ Impossible de charger les helpers YunoHost. YunoHost n'est peut-être pas installé correctement."
+    echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
-# Arguments passés par YunoHost
+# Arguments
 app=$1
 domain=$2
 path=$3
 is_public=${4:-1}
 
 # Aller dans le répertoire du dépôt cloné
-if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
-    cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
-else
+if [ -z "$YNH_APP_BASEDIR" ] || [ ! -d "$YNH_APP_BASEDIR" ]; then
     ynh_die "❌ YNH_APP_BASEDIR non défini"
 fi
+cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
 
-# === Vérifier que velocio-POI existe ===
+# Vérifier que velocio-POI existe
 if [ ! -d "velocio-POI" ]; then
     echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
     ls -la
     ynh_die "Le code source est manquant. Vérifiez que le dépôt contient le dossier velocio-POI/"
 fi
 
-# === Variables ===
+# Variables
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# === Nettoyer et créer le dossier cible ===
+# Nettoyer et créer le dossier cible
 ynh_secure_remove "$final_path"
 mkdir -p "$final_path"
 
-# === Copier le code ===
+# Copier le code (pas de git clone !)
 cp -r velocio-POI "$src_dir"
 
-# === Vérifier requirements.txt ===
+# Vérifier requirements.txt
 if [ ! -f "$src_dir/requirements.txt" ]; then
-    ynh_die "❌ Fichier requirements.txt introuvable dans $src_dir"
+    ynh_die "❌ requirements.txt introuvable dans $src_dir"
 fi
 
-# === Créer l'environnement virtuel ===
+# Créer l’environnement virtuel
 python3 -m venv "$src_dir/venv"
 source "$src_dir/venv/bin/activate"
 
-# === Installer les dépendances ===
+# Installer les dépendances
 ynh_script_progression --message="Installation des dépendances Python..."
 pip install --upgrade pip > /dev/null 2>&1
 if ! pip install -r "$src_dir/requirements.txt"; then
     ynh_die "❌ Échec de l'installation des dépendances Python"
 fi
 
-# === Créer les dossiers utilisateur ===
+# Créer les dossiers utilisateur
 mkdir -p /home/yunohost.app/.velocio_poi/cache
 mkdir -p /home/yunohost.app/.velocio_poi/output
-chown -R yunohost.app:yunohost.app /home/yunohost.app/.velocio_poi
+# Ne pas forcer chown → YunoHost gère les droits
 
-# === Configurer uWSGI ===
-ynh_uwsgi_configure --app_id="$app" --uwsgi_file="/etc/uwsgi/apps-available/velocio-poi.ini"
+# Configurer uWSGI
+ynh_uwsgi_configure --app_id="$app" --uwsgi_file="etc/uwsgi/apps-available/velocio-poi.ini"
 
-# === Configurer Nginx ===
+# Configurer Nginx
 ynh_nginx_configure --domain="$domain" --app_id="$app" --path="$path" --conf_file="conf/nginx.conf"
 
-# === Enregistrer les paramètres de l'application ===
+# Enregistrer les paramètres
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# === Nettoyer le cache temporaire ===
+# Nettoyer
 ynh_clean_setup
 
-echo "✅ Velocio Traces & Spots installé avec succès ! Accédez-y sur http://$domain$path"
+echo "✅ Velocio Traces & Spots installé avec succès !"

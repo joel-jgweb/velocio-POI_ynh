@@ -3,11 +3,11 @@
   "id": "velocio-poi-ynh",
   "packaging_format": 1,
   "description": {
-    "en": "Find POI around a GPX track using OpenStreetMap",
-    "fr": "Trouvez des POI autour d'une trace GPX avec OpenStreetMap"
+    "en": "Find restaurants, accommodations, bike services, etc. around a GPX track using OpenStreetMap",
+    "fr": "Trouvez restaurants, hébergements, services vélo, etc. autour d'une trace GPX avec OpenStreetMap"
   },
   "version": "1.0.1~ynh1",
-  "url": "https://github.com/joel-jgweb/Velocio-POI",
+  "url": "https://github.com/joel-jgweb/velocio-POI_ynh",
   "author": "joel-jgweb",
   "license": "GPL-3.0",
   "requirements": {
@@ -33,17 +33,16 @@
           "en": "Under which path do you want to access the app?",
           "fr": "Sous quel chemin voulez-vous accéder à l'application ?"
         },
-        "default": "/velocio",
-        "example": "/velocio"
+        "default": "/velocio"
       },
       {
         "name": "is_public",
         "type": "boolean",
         "ask": {
-          "en": "Should the app be open to everyone?",
-          "fr": "L'application doit-elle être ouverte à tous ?"
+          "en": "Should this app be accessible to anonymous visitors?",
+          "fr": "Cette application doit-elle être accessible aux visiteurs anonymes ?"
         },
-        "default": "1"
+        "default": "yes"
       }
     ]
   }
