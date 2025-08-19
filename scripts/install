@@ -1,16 +1,22 @@
 #!/bin/bash
 # scripts/install
 
-# Exit immédiatement si une commande échoue
-set -euo pipefail
+# Ne pas activer 'set -euo pipefail' tout de suite
+# On attend d'avoir les arguments
 
 app=$1
 domain=$2
 path=$3
 
+# Maintenant, on peut activer le mode strict
+set -euo pipefail
+
 # === S'assurer qu'on est dans le bon répertoire ===
 if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
-    cd "$YNH_APP_BASEDIR" || exit 1
+    cd "$YNH_APP_BASEDIR" || {
+        echo "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
+        exit 1
+    }
 fi
 
 # === Variables ===
@@ -32,9 +38,12 @@ fi
 cp -r velocio-POI "$src_dir"
 
 # === Aller dans le dossier de l'app ===
-cd "$src_dir" || exit 1
+cd "$src_dir" || {
+    echo "❌ Impossible d'accéder à $src_dir"
+    exit 1
+}
 
-# === Environnement virtuel ===
+# === Créer l'environnement virtuel ===
 python3 -m venv venv
 source venv/bin/activate
 
