@@ -1,25 +1,48 @@
 #!/bin/bash
+# scripts/install
+
 app=$1
 domain=$2
 path=$3
 
+# === S'assurer qu'on est dans le bon répertoire ===
+if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
+    cd "$YNH_APP_BASEDIR" || exit 1
+fi
+
+# === Variables ===
 final_path="/var/www/$app"
+src_dir="$final_path/velocio-POI"
+
+# === Créer le dossier cible ===
 mkdir -p "$final_path"
 
-# Copie le dossier velocio-POI
-cp -r velocio-POI "$final_path/"
+# === Vérifier que velocio-POI existe ===
+if [ ! -d "velocio-POI" ]; then
+    echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
+    echo "Contenu actuel :"
+    ls -la
+    exit 1
+fi
 
-# Va dans le dossier de l'app
-cd "$final_path/velocio-POI" || exit 1
+# === Copier le code ===
+cp -r velocio-POI "$src_dir"
 
-# Créer l'environnement virtuel
+# === Aller dans le dossier de l'app ===
+cd "$src_dir" || exit 1
+
+# === Environnement virtuel ===
 python3 -m venv venv
 source venv/bin/activate
 
-# Installer les dépendances
+# === Installer les dépendances ===
+if [ ! -f "requirements.txt" ]; then
+    echo "❌ requirements.txt introuvable"
+    exit 1
+fi
 pip install -r requirements.txt
 
-# Créer les dossiers utilisateur
+# === Créer les dossiers utilisateur ===
 mkdir -p ~/.velocio_poi/cache
 mkdir -p ~/.velocio_poi/output
 mkdir -p uploads
