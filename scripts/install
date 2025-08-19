@@ -5,19 +5,19 @@ app=$1
 domain=$2
 path=$3
 
-# Aller dans le bon répertoire
+# === Aller dans le bon répertoire ===
 if [ -n "$YNH_APP_BASEDIR" ] && [ -d "$YNH_APP_BASEDIR" ]; then
-    cd "$YNH_APP_BASEDIR" || exit 1
+    cd "$YNH_APP_BASEDIR" || {
+        echo "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
+        exit 1
+    }
 fi
 
-# Variables
+# === Variables ===
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Créer le dossier cible
-mkdir -p "$final_path"
-
-# Vérifier que velocio-POI existe
+# === Vérifier que velocio-POI existe dans le dépôt ===
 if [ ! -d "velocio-POI" ]; then
     echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
     echo "Contenu actuel :"
@@ -25,20 +25,30 @@ if [ ! -d "velocio-POI" ]; then
     exit 1
 fi
 
-# Copier le code
+# === Créer le dossier cible ===
+mkdir -p "$final_path"
+
+# === Copier le code (pas de git clone !) ===
 cp -r velocio-POI "$src_dir"
 
-# Aller dans le dossier de l'app
-cd "$src_dir" || exit 1
+# === Aller dans le dossier de l'app ===
+cd "$src_dir" || {
+    echo "❌ Impossible d'accéder à $src_dir"
+    exit 1
+}
 
-# Créer l'environnement virtuel
+# === Créer l'environnement virtuel ===
 python3 -m venv venv
 source venv/bin/activate
 
-# Installer les dépendances
+# === Installer les dépendances ===
+if [ ! -f "requirements.txt" ]; then
+    echo "❌ requirements.txt introuvable"
+    exit 1
+fi
 pip install -r requirements.txt
 
-# Créer les dossiers utilisateur
+# === Créer les dossiers utilisateur ===
 mkdir -p ~/.velocio_poi/cache
 mkdir -p ~/.velocio_poi/output
 mkdir -p uploads
