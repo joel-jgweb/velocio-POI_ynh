@@ -1,18 +1,15 @@
 #!/bin/bash
-# scripts/install
-
 app=$1
 domain=$2
 path=$3
 
-# Chemin d'installation
 final_path="/var/www/$app"
 mkdir -p "$final_path"
 
-# Copie le code source
+# Copie le dossier velocio-POI
 cp -r velocio-POI "$final_path/"
 
-# Dossier de l'app
+# Va dans le dossier de l'app
 cd "$final_path/velocio-POI" || exit 1
 
 # Créer l'environnement virtuel
@@ -26,8 +23,5 @@ pip install -r requirements.txt
 mkdir -p ~/.velocio_poi/cache
 mkdir -p ~/.velocio_poi/output
 mkdir -p uploads
-
-# Rendre exécutable
-chmod +x src/server.py
 
 echo "✅ Velocio Traces & Spots installé avec succès !"

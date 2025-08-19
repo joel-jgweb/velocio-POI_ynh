@@ -14,10 +14,7 @@
     "yunohost": ">= 4.0"
   },
   "multi_instance": true,
-  "services": [
-    "nginx",
-    "uwsgi"
-  ],
+  "services": ["nginx", "uwsgi"],
   "arguments": {
     "install": [
       {
