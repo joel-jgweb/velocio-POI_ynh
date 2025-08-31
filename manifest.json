@@ -13,36 +13,42 @@
   "requirements": {
     "yunohost": ">= 4.0"
   },
-  "multi_instance": true,
-  "services": ["nginx", "uwsgi"],
   "arguments": {
     "install": [
+      {
+        "name": "app",
+        "type": "app",
+        "ask": {
+          "en": "App identifier",
+          "fr": "Identifiant de l'application"
+        }
+      },
       {
         "name": "domain",
         "type": "domain",
         "ask": {
-          "en": "On which domain do you want to deploy the app?",
-          "fr": "Sur quel domaine voulez-vous déployer l'application ?"
+          "en": "Choose the domain where this app should be installed",
+          "fr": "Sur quel domaine installer cette application ?"
         },
-        "example": "exemple.org"
+        "example": "yunohost.local"
       },
       {
         "name": "path",
         "type": "path",
+        "default": "/velocio",
         "ask": {
-          "en": "Under which path do you want to access the app?",
-          "fr": "Sous quel chemin voulez-vous accéder à l'application ?"
-        },
-        "default": "/velocio"
+          "en": "Choose the URL path (after the domain) where this app should be installed",
+          "fr": "Choisissez le chemin d'accès (après le domaine) où installer cette application"
+        }
       },
       {
         "name": "is_public",
         "type": "boolean",
+        "default": "yes",
         "ask": {
-          "en": "Should this app be accessible to anonymous visitors?",
+          "en": "Should this app be exposed to anonymous visitors?",
           "fr": "Cette application doit-elle être accessible aux visiteurs anonymes ?"
-        },
-        "default": "yes"
+        }
       }
     ]
   }
