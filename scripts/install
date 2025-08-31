@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🔥 Charger les helpers YunoHost (OBLIGATOIRE)
+# 🔥 Charger les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
