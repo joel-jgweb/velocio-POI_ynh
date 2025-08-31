@@ -1,10 +1,12 @@
 #!/bin/bash
 
+# Charge les helpers YunoHost pour les fonctions utilitaires
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
+# Variables YunoHost transmises à l'installation
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
@@ -12,23 +14,23 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 
 final_path="/var/www/$app"
 
-# Copie le code depuis la racine du dépôt YunoHost
+# 1. Copie le code applicatif depuis la racine du dépôt
 mkdir -p "$final_path"
 cp -a "$PWD/velocio-POI" "$final_path/"
 
-# Installe les dépendances Python (si requirements.txt existe)
+# 2. Installe les dépendances Python (si requirements.txt existe)
 if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
     pip3 install -r "$final_path/velocio-POI/requirements.txt"
 fi
 
-# Crée le service systemd pour l'app Flask
+# 3. Crée le service systemd pour l'app Flask
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
 After=network.target
 
 [Service]
-User=yunohost.app
+User=yunohost   # Utilisateur d'exécution. Adapte si besoin (www-data si tu préfères)
 WorkingDirectory=${final_path}/velocio-POI/src
 ExecStart=/usr/bin/python3 server.py
 Restart=always
@@ -41,7 +43,7 @@ systemctl daemon-reload
 systemctl enable ${app}
 systemctl start ${app}
 
-# Génère la config nginx pour proxy_pass sur le port 5000
+# 4. Génère la config nginx pour proxy_pass sur le port 5000
 nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
 mkdir -p "/etc/nginx/conf.d/${domain}.d"
 cat > "$nginx_conf" <<EOF
