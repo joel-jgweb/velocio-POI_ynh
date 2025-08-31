@@ -6,44 +6,50 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
-# Arguments
-app=$1
-domain=$2
-path=$3
-is_public=${4:-1}
+# Arguments passés par YunoHost
+app="${1:-}"
+domain="${2:-}"
+path="${3:-}"
+is_public="${4:-1}"
 
-# Vérifier que les arguments sont bien passés
-if [ -z "$app" ] || [ -z "$domain" ] || [ -z "$path" ]; then
-    ynh_die "❌ Arguments manquants : app='$app', domain='$domain', path='$path'"
+# Vérifier que les arguments sont bien fournis
+if [ -z "$app" ]; then
+    ynh_die "❌ Le nom de l'application (arg1) est manquant."
+fi
+if [ -z "$domain" ]; then
+    ynh_die "❌ Le domaine (arg2) est manquant."
+fi
+if [ -z "$path" ]; then
+    ynh_die "❌ Le chemin (arg3) est manquant."
 fi
 
-# Aller dans le répertoire du dépôt
+# Aller dans le répertoire du dépôt cloné
 if [ -z "$YNH_APP_BASEDIR" ] || [ ! -d "$YNH_APP_BASEDIR" ]; then
-    ynh_die "❌ YNH_APP_BASEDIR non défini"
+    ynh_die "❌ YNH_APP_BASEDIR non défini ou invalide"
 fi
 cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
 
-# Vérifier que velocio-POI existe
+# Vérifier que le dossier velocio-POI existe
 if [ ! -d "velocio-POI" ]; then
     echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
     ls -la
-    ynh_die "Le code source est manquant."
+    ynh_die "Le code source est manquant. Vérifiez que le dépôt contient le dossier velocio-POI/"
 fi
 
 # Variables
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Nettoyer et créer le dossier
+# Nettoyer et créer le dossier cible
 ynh_secure_remove "$final_path"
 mkdir -p "$final_path"
 
-# Copier le code
+# Copier le code (pas de git clone)
 cp -r velocio-POI "$src_dir"
 
-# Vérifier requirements.txt
+# Vérifier que requirements.txt existe
 if [ ! -f "$src_dir/requirements.txt" ]; then
-    ynh_die "❌ requirements.txt introuvable"
+    ynh_die "❌ Fichier requirements.txt introuvable dans $src_dir"
 fi
 
 # Créer l’environnement virtuel
@@ -54,10 +60,10 @@ source "$src_dir/venv/bin/activate"
 ynh_script_progression --message="Installation des dépendances Python..."
 pip install --upgrade pip > /dev/null 2>&1
 if ! pip install -r "$src_dir/requirements.txt"; then
-    ynh_die "❌ Échec de l'installation des dépendances"
+    ynh_die "❌ Échec de l'installation des dépendances Python"
 fi
 
-# === 🔧 Créer le fichier uWSGI MANUELLEMENT (nouvelle méthode) ===
+# === 🔧 Créer le fichier uWSGI (manuellement) ===
 cat << EOF > /etc/uwsgi/apps-available/$app.ini
 [uwsgi]
 project = $app
@@ -77,10 +83,12 @@ EOF
 
 # Activer uWSGI
 ln -sf /etc/uwsgi/apps-available/$app.ini /etc/uwsgi/apps-enabled/$app.ini
-systemctl reload uwsgi
+systemctl reload uwsgi || ynh_die "❌ Échec du rechargement de uWSGI"
 
-# === 🔧 Créer le vhost Nginx MANUELLEMENT ===
-cat << EOF > /etc/nginx/conf.d/$domain.d/$app.conf
+# === 🔧 Créer le vhost Nginx (manuellement) ===
+nginx_conf_dir="/etc/nginx/conf.d/$domain.d"
+mkdir -p "$nginx_conf_dir"
+cat << EOF > "$nginx_conf_dir/$app.conf"
 server {
     listen 80;
     server_name $domain;
@@ -96,18 +104,18 @@ server {
 EOF
 
 # Recharger Nginx
-systemctl reload nginx
+systemctl reload nginx || ynh_die "❌ Échec du rechargement de Nginx"
 
-# Créer les dossiers utilisateur
+# === 🔧 Créer les dossiers utilisateur ===
 mkdir -p /home/yunohost.app/.velocio_poi/cache
 mkdir -p /home/yunohost.app/.velocio_poi/output
 
-# Enregistrer les paramètres
+# Enregistrer les paramètres de l'app
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# Nettoyer
+# Nettoyer le cache temporaire
 ynh_clean_setup
 
-echo "✅ Velocio Traces & Spots installé avec succès !"
+echo "✅ Velocio Traces & Spots installé avec succès ! Accédez-y sur http://$domain$path"
