@@ -1,19 +1,20 @@
 #!/bin/bash
+# scripts/install
 
-# Charge les helpers YunoHost
+# Charger les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
-# Variables YunoHost
-app=${YNH_APP_INSTANCE_NAME}
-domain=${YNH_APP_ARG_DOMAIN}
-path=${YNH_APP_ARG_PATH}
-is_public=${YNH_APP_ARG_IS_PUBLIC}
+# Récupérer les arguments YunoHost
+app="${YNH_APP_INSTANCE_NAME}"
+domain="${YNH_APP_ARG_DOMAIN}"
+path="${YNH_APP_ARG_PATH}"
+is_public="${YNH_APP_ARG_IS_PUBLIC}"
 final_path="/var/www/$app"
 
-# DEBUG : Où suis-je ?
+# === DEBUG : afficher l'environnement ===
 echo "=== DEBUG : PWD = $PWD"
 echo "=== DEBUG : Contenu du dossier courant (scripts) ==="
 ls -l
@@ -22,31 +23,35 @@ ls -l ..
 echo "=== DEBUG : Contenu de ../velocio-POI (si présent) ==="
 ls -l ../velocio-POI || echo "velocio-POI absent !"
 
-# 1. Copie le code applicatif depuis le dossier parent
+# 1. Créer le dossier final et copier le code
 mkdir -p "$final_path"
 cp -a ../velocio-POI "$final_path/"
 
-# DEBUG : Vérifie la copie
+# === 🔧 CORRECTION : Créer le dossier de données avec bons droits ===
+DATA_DIR="$final_path/data"
+mkdir -p "$DATA_DIR/cache" "$DATA_DIR/output"
+chown -R www-data:www-data "$DATA_DIR"
+chmod -R 755 "$DATA_DIR"
+
+# Vérifier la copie
 echo "=== DEBUG : Contenu de $final_path/velocio-POI après copie ==="
 ls -l "$final_path/velocio-POI"
-echo "=== DEBUG : Contenu de $final_path/velocio-POI/src après copie ==="
-ls -l "$final_path/velocio-POI/src" || echo "src absent !"
 
-# 2. Installation pip3 si non présent
+# 2. Vérifier et installer pip3 si nécessaire
 if ! command -v pip3 > /dev/null; then
     echo "pip3 non trouvé, installation..."
     apt update
     apt install -y python3-pip
 fi
 
-# 3. Création de l'environnement virtuel Python
+# 3. Créer l'environnement virtuel Python
 python3 -m venv "$final_path/venv"
 
-# 4. Installation des dépendances dans le venv
+# 4. Installer les dépendances
 "$final_path/venv/bin/pip" install --upgrade pip
 "$final_path/venv/bin/pip" install -r "$final_path/velocio-POI/requirements.txt"
 
-# 5. Création du service systemd pour le venv
+# 5. Créer le service systemd
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
@@ -54,6 +59,7 @@ After=network.target
 
 [Service]
 User=www-data
+Group=www-data
 WorkingDirectory=${final_path}/velocio-POI/src
 ExecStart=${final_path}/venv/bin/python server.py
 Restart=always
@@ -64,11 +70,14 @@ EOF
 
 systemctl daemon-reload
 systemctl enable ${app}
+
+# 6. Démarrer le service
 systemctl start ${app}
 
-# 6. Génération de la config nginx pour proxy_pass sur le port 5000
+# 7. Créer la configuration Nginx
 nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
 mkdir -p "/etc/nginx/conf.d/${domain}.d"
+
 cat > "$nginx_conf" <<EOF
 location ${path}/ {
     proxy_pass http://127.0.0.1:5000/;
@@ -81,4 +90,4 @@ EOF
 
 systemctl reload nginx
 
-echo "✅ Velocio Traces & Spots installé et démarré sur http://$domain$path"
+echo "✅ Velocio Traces & Spots installé et démarré sur http://${domain}${path}"
