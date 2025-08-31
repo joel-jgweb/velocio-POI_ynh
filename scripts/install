@@ -6,116 +6,62 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
-# Arguments passés par YunoHost
+# 📥 Récupération des arguments passés par YunoHost
 app="${1:-}"
 domain="${2:-}"
 path="${3:-}"
 is_public="${4:-1}"
 
-# Vérifier que les arguments sont bien fournis
+# ✅ Vérification que le nom de l'application a bien été transmis
 if [ -z "$app" ]; then
     ynh_die "❌ Le nom de l'application (arg1) est manquant."
 fi
+
+# ✅ Vérification que le domaine est fourni
 if [ -z "$domain" ]; then
     ynh_die "❌ Le domaine (arg2) est manquant."
 fi
+
+# ✅ Vérification que le chemin est fourni
 if [ -z "$path" ]; then
-    ynh_die "❌ Le chemin (arg3) est manquant."
+    ynh_die "❌ Le chemin d'URL (arg3) est manquant."
 fi
 
-# Aller dans le répertoire du dépôt cloné
-if [ -z "$YNH_APP_BASEDIR" ] || [ ! -d "$YNH_APP_BASEDIR" ]; then
-    ynh_die "❌ YNH_APP_BASEDIR non défini ou invalide"
-fi
-cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
+# 🛠️ Début de l'installation
+ynh_script_progression --message="Installation de Velocio Traces & Spots..."
 
-# Vérifier que le dossier velocio-POI existe
-if [ ! -d "velocio-POI" ]; then
-    echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
-    ls -la
-    ynh_die "Le code source est manquant. Vérifiez que le dépôt contient le dossier velocio-POI/"
-fi
-
-# Variables
+# 📁 Définir les chemins
 final_path="/var/www/$app"
-src_dir="$final_path/velocio-POI"
+velocio_src="velocio-POI"
 
-# Nettoyer et créer le dossier cible
-ynh_secure_remove "$final_path"
-mkdir -p "$final_path"
+# 🔧 Créer le répertoire final
+ynh_setup_source_tree
+ynh_copy_source "$velocio_src" "$final_path"
 
-# Copier le code (pas de git clone)
-cp -r velocio-POI "$src_dir"
+# 🏗️ Créer le dossier utilisateur si nécessaire
+user_data_dir="$HOME/.velocio_poi"
+mkdir -p "$user_data_dir"
 
-# Vérifier que requirements.txt existe
-if [ ! -f "$src_dir/requirements.txt" ]; then
-    ynh_die "❌ Fichier requirements.txt introuvable dans $src_dir"
-fi
-
-# Créer l’environnement virtuel
-python3 -m venv "$src_dir/venv"
-source "$src_dir/venv/bin/activate"
-
-# Installer les dépendances
-ynh_script_progression --message="Installation des dépendances Python..."
-pip install --upgrade pip > /dev/null 2>&1
-if ! pip install -r "$src_dir/requirements.txt"; then
-    ynh_die "❌ Échec de l'installation des dépendances Python"
-fi
-
-# === 🔧 Créer le fichier uWSGI MANUELLEMENT (YunoHost 11+) ===
-cat << EOF > /etc/uwsgi/apps-available/$app.ini
-[uwsgi]
-project = $app
-base = /var/www/\$project/velocio-POI
-chdir = \$base/src
-module = server:app
-callable = app
-virtualenv = \$base/venv
-master = true
-processes = 2
-socket = /run/uwsgi/app/\$project/uwsgi.sock
-chmod-socket = 666
-vacuum = true
-die-on-term = true
-plugin = python3
-EOF
-
-# Activer uWSGI
-ln -sf /etc/uwsgi/apps-available/$app.ini /etc/uwsgi/apps-enabled/$app.ini
-systemctl reload uwsgi || ynh_die "❌ Échec du rechargement de uWSGI"
-
-# === 🔧 Créer le vhost Nginx MANUELLEMENT ===
-nginx_conf_dir="/etc/nginx/conf.d/$domain.d"
-mkdir -p "$nginx_conf_dir"
-cat << EOF > "$nginx_conf_dir/$app.conf"
-server {
-    listen 80;
-    server_name $domain;
-
-    location $path/ {
-        include uwsgi_params;
-        uwsgi_pass unix:///run/uwsgi/app/$app/uwsgi.sock;
-        uwsgi_param UWSGI_CHDIR /var/www/$app/velocio-POI/src;
-        uwsgi_param UWSGI_SCRIPT server:app;
-        uwsgi_param UWSGI_PYHOME /var/www/$app/velocio-POI/venv;
-    }
-}
-EOF
-
-# Recharger Nginx
-systemctl reload nginx || ynh_die "❌ Échec du rechargement de Nginx"
-
-# Créer les dossiers utilisateur
-mkdir -p /home/yunohost.app/.velocio_poi/cache
-mkdir -p /home/yunohost.app/.velocio_poi/output
-
-# Enregistrer les paramètres
+# ⚙️ Enregistrer les paramètres de l'application
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# Nettoyer le cache temporaire
+# 🔐 Rendre l'application accessible ou non aux anonymes
+if [ "$is_public" = "yes" ]; then
+    ynh_permission_update --app "$app" --perm main --allowed all_users
+else
+    ynh_permission_update --app "$app" --perm main --protected true
+fi
+
+# 🔄 Générer la configuration Nginx
+ynh_nginx_generate_config
+
+# 🔄 Redémarrer Nginx pour appliquer les changements
+ynh_service_reload_or_restart nginx
+
+# 🧹 Nettoyer le cache d'installation
 ynh_clean_setup
 
+# ✅ Message de succès
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
