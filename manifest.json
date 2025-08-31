@@ -4,7 +4,7 @@
   "packaging_format": 1,
   "description": {
     "en": "Find restaurants, accommodations, bike services, etc. around a GPX track using OpenStreetMap",
-    "fr": "Trouvez restaurants, hébergements, services vélo, etc. autour d'une trace GPX avec OpenStreetMap"
+    "fr": "Trouvez restaurants, hébergements, services vélos, etc. autour d'une trace GPX avec OpenStreetMap"
   },
   "version": "1.0.1~ynh1",
   "url": "https://github.com/joel-jgweb/velocio-POI_ynh",
