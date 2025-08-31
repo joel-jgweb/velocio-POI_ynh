@@ -44,7 +44,7 @@ src_dir="$final_path/velocio-POI"
 ynh_secure_remove "$final_path"
 mkdir -p "$final_path"
 
-# Copier le code
+# Copier le code (pas de git clone !)
 cp -r velocio-POI "$src_dir"
 
 # Vérifier requirements.txt
