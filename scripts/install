@@ -1,57 +1,44 @@
 #!/bin/bash
 
-# 🔥 Charger les helpers YunoHost
 source /usr/share/yunohost/helpers || {
-    echo "❌ Impossible de charger les helpers YunoHost. Vérifiez que YunoHost est installé."
+    echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
-# Charger les helpers packaging YunoHost
-source _common.sh 2>/dev/null || true
-source ../_common.sh 2>/dev/null || true
-source /usr/share/yunohost/app_helpers.sh 2>/dev/null || true
-source /usr/share/yunohost/app_packaging_helpers.sh 2>/dev/null || true
-
-# Récupérer les paramètres via les variables d'environnement YunoHost
+# Récupérer les paramètres YunoHost
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
 is_public=${YNH_APP_ARG_IS_PUBLIC}
 
-# Vérifications
-[ -z "$app" ] && ynh_die "❌ Le nom de l'application (arg1) est manquant."
-[ -z "$domain" ] && ynh_die "❌ Le domaine (arg2) est manquant."
-[ -z "$path" ] && ynh_die "❌ Le chemin (arg3) est manquant."
+[ -z "$app" ] && ynh_die "❌ Le nom de l'application est manquant."
+[ -z "$domain" ] && ynh_die "❌ Le domaine est manquant."
+[ -z "$path" ] && ynh_die "❌ Le chemin est manquant."
 
-# Chemins
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Copier les fichiers (remplacer par une copie brute si helpers manquants)
+# Copier les fichiers depuis le bon dossier sources
 mkdir -p "$src_dir"
-cp -a ../sources/* "$src_dir/" 2>/dev/null || echo "⚠️ Copie manuelle des fichiers, vérifiez le chemin source"
+cp -a "../sources/." "$src_dir/" || echo "⚠️ Copie manuelle des fichiers, vérifiez le chemin source"
 
-# Dossier utilisateur
 user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
-# Enregistrer les paramètres
 ynh_app_setting_set --app="$app" --key="domain" --value="$domain"
 ynh_app_setting_set --app="$app" --key="path" --value="$path"
 ynh_app_setting_set --app="$app" --key="is_public" --value="$is_public"
 
-# Permissions SSO
+# Permissions SSO (utiliser le bon argument YunoHost)
 if [[ "$is_public" == "yes" || "$is_public" == "1" ]]; then
-    ynh_permission_update --app "$app" --perm main --allowed all_users
+    ynh_permission_update --app "$app" --permission main --public yes
 else
-    ynh_permission_update --app "$app" --perm main --protected true
+    ynh_permission_update --app "$app" --permission main --public no
 fi
 
-# Nginx
 ynh_nginx_generate_config
 ynh_service_reload_or_restart nginx
 
-# Nettoyer
 ynh_clean_setup
 
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
