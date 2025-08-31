@@ -4,7 +4,7 @@ from pathlib import Path
 
 APP_NAME = "Velocio_POI"
 
-# === 🔧 CORRECTION : DOSSIER DE DONNÉES DANS /var/www/app/data ===
+# === 🔧 DOSSIER DE DONNÉES DANS /var/www/app/data (correction YunoHost) ===
 USER_DATA_DIR = Path("/var/www/velocio-poi-ynh/data")
 CACHE_DIR = USER_DATA_DIR / "cache"
 OUTPUT_DIR = USER_DATA_DIR / "output"
@@ -14,7 +14,7 @@ USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# === FIN DE LA CORRECTION ===
+# === FIN CORRECTION CHEMINS ===
 
 USER_AGENT = "Velocio Traces & Spots v1.0"
 
@@ -53,7 +53,7 @@ ATTRACTION_TAGS = [{"key": "tourism", "value": "attraction"}]
 VIEWPOINT_TAGS = [{"key": "tourism", "value": "viewpoint"}]
 MARKETPLACE_TAGS = [{"key": "amenity", "value": "marketplace"}]
 
-# === 🏁 Catégories regroupées
+# === 🏁 Catégories regroupées (utilisé pour l'interface)
 POI_CATEGORIES = {
     "Se restaurer": [
         {"name": "Restaurant", "tags": RESTAURANT_TAGS},
@@ -82,6 +82,13 @@ POI_CATEGORIES = {
         {"name": "Point de vue", "tags": VIEWPOINT_TAGS},
         {"name": "Place de marché", "tags": MARKETPLACE_TAGS},
     ],
+}
+
+# === 🔁 COMPATIBILITÉ : Recréer ALL_POI_TYPES pour server.py ===
+ALL_POI_TYPES = {
+    item["name"]: item["tags"]
+    for category in POI_CATEGORIES.values()
+    for item in category
 }
 
 # === ✅ POI_STYLES (pour la carte) ===
