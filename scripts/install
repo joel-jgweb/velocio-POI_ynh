@@ -10,40 +10,50 @@ domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
 is_public=${YNH_APP_ARG_IS_PUBLIC}
 
-[ -z "$app" ] && ynh_die "❌ Le nom de l'application est manquant."
-[ -z "$domain" ] && ynh_die "❌ Le domaine est manquant."
-[ -z "$path" ] && ynh_die "❌ Le chemin est manquant."
-
 final_path="/var/www/$app"
 
-# Copie le dossier velocio-POI (avec requirements.txt et src/)
+# Copie le code
 mkdir -p "$final_path"
 cp -a "$PWD/velocio-POI" "$final_path/"
 
-# Installe les dépendances Python si requirements.txt présent
+# Installe les dépendances Python
 if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
     pip3 install -r "$final_path/velocio-POI/requirements.txt"
 fi
 
-# Dossier utilisateur pour tes données
-user_data_dir="/home/yunohost.app/.velocio_poi"
-mkdir -p "$user_data_dir"
+# Crée le service systemd pour Flask
+cat > /etc/systemd/system/${app}.service <<EOF
+[Unit]
+Description=Velocio POI Flask App (YunoHost)
+After=network.target
 
-# Enregistre les paramètres YunoHost
-ynh_app_setting_set --app="$app" --key="domain" --value="$domain"
-ynh_app_setting_set --app="$app" --key="path" --value="$path"
-ynh_app_setting_set --app="$app" --key="is_public" --value="$is_public"
+[Service]
+User=yunohost.app
+WorkingDirectory=${final_path}/velocio-POI/src
+ExecStart=/usr/bin/python3 start.py
+Restart=always
 
-# Permissions SSO (optionnel, non bloquant, tu peux commenter cette ligne si toujours KO)
-#if [[ "$is_public" == "yes" || "$is_public" == "1" ]]; then
-#    ynh_permission_update --app "$app" --permission main --public yes || true
-#else
-#    ynh_permission_update --app "$app" --permission main --public no || true
-#fi
+[Install]
+WantedBy=multi-user.target
+EOF
 
-ynh_nginx_generate_config
-ynh_service_reload_or_restart nginx
+systemctl daemon-reload
+systemctl enable ${app}
+systemctl start ${app}
 
-ynh_clean_setup
+# Génère la config nginx pour proxy_pass
+nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
+mkdir -p "/etc/nginx/conf.d/${domain}.d"
+cat > "$nginx_conf" <<EOF
+location ${path}/ {
+    proxy_pass http://127.0.0.1:8000/;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+}
+EOF
 
-echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
+systemctl reload nginx
+
+echo "✅ Velocio Traces & Spots installé et démarré sur http://$domain$path"
