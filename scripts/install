@@ -1,24 +1,24 @@
 #!/bin/bash
 
+# Charge les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
+# Variables YunoHost
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
 is_public=${YNH_APP_ARG_IS_PUBLIC}
-
 final_path="/var/www/$app"
 
-# DEBUG : Où suis-je
+# DEBUG : Où suis-je ?
 echo "=== DEBUG : PWD = $PWD"
 echo "=== DEBUG : Contenu du dossier courant (scripts) ==="
 ls -l
 echo "=== DEBUG : Contenu du dossier parent ==="
 ls -l ..
-
 echo "=== DEBUG : Contenu de ../velocio-POI (si présent) ==="
 ls -l ../velocio-POI || echo "velocio-POI absent !"
 
@@ -32,12 +32,21 @@ ls -l "$final_path/velocio-POI"
 echo "=== DEBUG : Contenu de $final_path/velocio-POI/src après copie ==="
 ls -l "$final_path/velocio-POI/src" || echo "src absent !"
 
-# 2. Installe les dépendances Python
-if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
-    pip3 install -r "$final_path/velocio-POI/requirements.txt"
+# 2. Installation pip3 si non présent
+if ! command -v pip3 > /dev/null; then
+    echo "pip3 non trouvé, installation..."
+    apt update
+    apt install -y python3-pip
 fi
 
-# 3. Crée le service systemd
+# 3. Création de l'environnement virtuel Python
+python3 -m venv "$final_path/venv"
+
+# 4. Installation des dépendances dans le venv
+"$final_path/venv/bin/pip" install --upgrade pip
+"$final_path/venv/bin/pip" install -r "$final_path/velocio-POI/requirements.txt"
+
+# 5. Création du service systemd pour le venv
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
@@ -46,7 +55,7 @@ After=network.target
 [Service]
 User=www-data
 WorkingDirectory=${final_path}/velocio-POI/src
-ExecStart=/usr/bin/python3 server.py
+ExecStart=${final_path}/venv/bin/python server.py
 Restart=always
 
 [Install]
@@ -57,7 +66,7 @@ systemctl daemon-reload
 systemctl enable ${app}
 systemctl start ${app}
 
-# 4. Génère la config nginx
+# 6. Génération de la config nginx pour proxy_pass sur le port 5000
 nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
 mkdir -p "/etc/nginx/conf.d/${domain}.d"
 cat > "$nginx_conf" <<EOF
