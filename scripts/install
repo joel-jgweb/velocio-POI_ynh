@@ -41,7 +41,7 @@ else
     ynh_permission_update --app "$app" --perm main --protected true
 fi
 
-# 🔄 Config Nginx
+# 🔄 Générer la config Nginx
 ynh_nginx_generate_config
 
 # 🔄 Recharger Nginx
