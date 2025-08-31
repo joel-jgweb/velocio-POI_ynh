@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# 🔥 Charger les helpers YunoHost
+# 🔥 Charger les helpers YunoHost (OBLIGATOIRE)
 source /usr/share/yunohost/helpers || {
-    echo "❌ Impossible de charger les helpers YunoHost."
+    echo "❌ Impossible de charger les helpers YunoHost. Vérifiez que YunoHost est installé."
     exit 1
 }
 
-# Arguments
+# Arguments passés par YunoHost
 app="${1:-}"
 domain="${2:-}"
 path="${3:-}"
 is_public="${4:-1}"
 
-# Vérifier que les arguments sont bien passés
+# Vérifier que les arguments sont bien fournis
 if [ -z "$app" ]; then
     ynh_die "❌ Le nom de l'application (arg1) est manquant."
 fi
@@ -29,7 +29,7 @@ if [ -z "$YNH_APP_BASEDIR" ] || [ ! -d "$YNH_APP_BASEDIR" ]; then
 fi
 cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_BASEDIR"
 
-# Vérifier que velocio-POI existe
+# Vérifier que le dossier velocio-POI existe
 if [ ! -d "velocio-POI" ]; then
     echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
     ls -la
@@ -40,14 +40,14 @@ fi
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Nettoyer et créer le dossier
+# Nettoyer et créer le dossier cible
 ynh_secure_remove "$final_path"
 mkdir -p "$final_path"
 
-# Copier le code (pas de git clone !)
+# Copier le code (pas de git clone)
 cp -r velocio-POI "$src_dir"
 
-# Vérifier requirements.txt
+# Vérifier que requirements.txt existe
 if [ ! -f "$src_dir/requirements.txt" ]; then
     ynh_die "❌ Fichier requirements.txt introuvable dans $src_dir"
 fi
@@ -63,7 +63,7 @@ if ! pip install -r "$src_dir/requirements.txt"; then
     ynh_die "❌ Échec de l'installation des dépendances Python"
 fi
 
-# === 🔧 Créer le fichier uWSGI MANUELLEMENT ===
+# === 🔧 Créer le fichier uWSGI MANUELLEMENT (YunoHost 11+) ===
 cat << EOF > /etc/uwsgi/apps-available/$app.ini
 [uwsgi]
 project = $app
@@ -115,7 +115,7 @@ ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# Nettoyer
+# Nettoyer le cache temporaire
 ynh_clean_setup
 
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
