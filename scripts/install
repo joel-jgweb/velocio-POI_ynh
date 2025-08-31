@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Charge les helpers YunoHost pour les fonctions utilitaires
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
 }
 
-# Variables YunoHost transmises à l'installation
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
@@ -14,16 +12,19 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 
 final_path="/var/www/$app"
 
-# DEBUG : Où suis-je et qu'est-ce qui existe ?
+# DEBUG : Où suis-je
 echo "=== DEBUG : PWD = $PWD"
-echo "=== DEBUG : Contenu du dossier courant ==="
+echo "=== DEBUG : Contenu du dossier courant (scripts) ==="
 ls -l
-echo "=== DEBUG : Contenu de velocio-POI (si existe) ==="
-ls -l velocio-POI || echo "velocio-POI absent !"
+echo "=== DEBUG : Contenu du dossier parent ==="
+ls -l ..
 
-# 1. Copie le code applicatif depuis la racine du dépôt
+echo "=== DEBUG : Contenu de ../velocio-POI (si présent) ==="
+ls -l ../velocio-POI || echo "velocio-POI absent !"
+
+# 1. Copie le code applicatif depuis le dossier parent
 mkdir -p "$final_path"
-cp -a "$PWD/velocio-POI" "$final_path/"
+cp -a ../velocio-POI "$final_path/"
 
 # DEBUG : Vérifie la copie
 echo "=== DEBUG : Contenu de $final_path/velocio-POI après copie ==="
@@ -31,12 +32,12 @@ ls -l "$final_path/velocio-POI"
 echo "=== DEBUG : Contenu de $final_path/velocio-POI/src après copie ==="
 ls -l "$final_path/velocio-POI/src" || echo "src absent !"
 
-# 2. Installe les dépendances Python (si requirements.txt existe)
+# 2. Installe les dépendances Python
 if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
     pip3 install -r "$final_path/velocio-POI/requirements.txt"
 fi
 
-# 3. Crée le service systemd pour l'app Flask
+# 3. Crée le service systemd
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
@@ -56,7 +57,7 @@ systemctl daemon-reload
 systemctl enable ${app}
 systemctl start ${app}
 
-# 4. Génère la config nginx pour proxy_pass sur le port 5000
+# 4. Génère la config nginx
 nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
 mkdir -p "/etc/nginx/conf.d/${domain}.d"
 cat > "$nginx_conf" <<EOF
