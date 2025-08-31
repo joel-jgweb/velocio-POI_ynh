@@ -10,7 +10,7 @@ source /usr/share/yunohost/helpers || {
 app="${1:-}"
 domain="${2:-}"
 path="${3:-}"
-is_public="${4:-1}"
+is_public="${4:-yes}"
 
 # Vérifications
 [ -z "$app" ] && ynh_die "❌ Le nom de l'application (arg1) est manquant."
