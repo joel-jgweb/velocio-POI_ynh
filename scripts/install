@@ -6,7 +6,7 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
-# Arguments passés par YunoHost
+# Arguments
 app="${1:-}"
 domain="${2:-}"
 path="${3:-}"
@@ -17,11 +17,11 @@ is_public="${4:-1}"
 [ -z "$domain" ] && ynh_die "❌ Le domaine (arg2) est manquant."
 [ -z "$path" ] && ynh_die "❌ Le chemin (arg3) est manquant."
 
-# Définir les chemins
+# Chemins
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Créer le répertoire final
+# Copier les fichiers
 ynh_setup_source_tree
 ynh_copy_source "velocio-POI" "$src_dir"
 
@@ -29,26 +29,24 @@ ynh_copy_source "velocio-POI" "$src_dir"
 user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
-# Enregistrer les paramètres
+# Paramètres
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# Gérer les permissions SSO
+# Permissions SSO
 if [ "$is_public" = "yes" ]; then
     ynh_permission_update --app "$app" --perm main --allowed all_users
 else
     ynh_permission_update --app "$app" --perm main --protected true
 fi
 
-# Générer la config Nginx
+# Nginx
 ynh_nginx_generate_config
-
-# Recharger Nginx
 ynh_service_reload_or_restart nginx
 
 # Nettoyer
 ynh_clean_setup
 
-
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
+EOF
