@@ -12,17 +12,15 @@ domain="${2:-}"
 path="${3:-}"
 is_public="${4:-1}"
 
-# ✅ Vérification que le nom de l'application a bien été transmis
+# ✅ Vérification que les arguments sont bien fournis
 if [ -z "$app" ]; then
     ynh_die "❌ Le nom de l'application (arg1) est manquant."
 fi
 
-# ✅ Vérification que le domaine est fourni
 if [ -z "$domain" ]; then
     ynh_die "❌ Le domaine (arg2) est manquant."
 fi
 
-# ✅ Vérification que le chemin est fourni
 if [ -z "$path" ]; then
     ynh_die "❌ Le chemin d'URL (arg3) est manquant."
 fi
@@ -32,14 +30,14 @@ ynh_script_progression --message="Installation de Velocio Traces & Spots..."
 
 # 📁 Définir les chemins
 final_path="/var/www/$app"
-velocio_src="velocio-POI"
+src_dir="$final_path/velocio-POI"
 
-# 🔧 Créer le répertoire final
+# 🔧 Préparer l'arborescence et copier les fichiers
 ynh_setup_source_tree
-ynh_copy_source "$velocio_src" "$final_path"
+ynh_copy_source "velocio-POI" "$src_dir"
 
-# 🏗️ Créer le dossier utilisateur si nécessaire
-user_data_dir="$HOME/.velocio_poi"
+# 🏗️ Créer le dossier utilisateur pour les données persistantes
+user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
 # ⚙️ Enregistrer les paramètres de l'application
@@ -47,7 +45,7 @@ ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# 🔐 Rendre l'application accessible ou non aux anonymes
+# 🔐 Gérer l'accès public via le SSO
 if [ "$is_public" = "yes" ]; then
     ynh_permission_update --app "$app" --perm main --allowed all_users
 else
@@ -57,7 +55,7 @@ fi
 # 🔄 Générer la configuration Nginx
 ynh_nginx_generate_config
 
-# 🔄 Redémarrer Nginx pour appliquer les changements
+# 🔄 Recharger Nginx pour appliquer la nouvelle configuration
 ynh_service_reload_or_restart nginx
 
 # 🧹 Nettoyer le cache d'installation
