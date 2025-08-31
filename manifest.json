@@ -18,6 +18,16 @@
   "arguments": {
     "install": [
       {
+        "name": "app",
+        "type": "string",
+        "ask": {
+          "en": "Technical app name (keep default)",
+          "fr": "Nom technique de l'application (garder par défaut)"
+        },
+        "example": "velocio-poi-ynh",
+        "default": "velocio-poi-ynh"
+      },
+      {
         "name": "domain",
         "type": "domain",
         "ask": {
