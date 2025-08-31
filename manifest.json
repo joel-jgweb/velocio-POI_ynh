@@ -16,14 +16,6 @@
   "arguments": {
     "install": [
       {
-        "name": "app",
-        "type": "app",
-        "ask": {
-          "en": "App identifier",
-          "fr": "Identifiant de l'application"
-        }
-      },
-      {
         "name": "domain",
         "type": "domain",
         "ask": {

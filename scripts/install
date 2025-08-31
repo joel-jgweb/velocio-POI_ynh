@@ -1,65 +1,53 @@
 #!/bin/bash
 
-# 🔥 Charger les helpers YunoHost (OBLIGATOIRE)
+# 🔥 Charger les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost. Vérifiez que YunoHost est installé."
     exit 1
 }
 
-# 📥 Récupération des arguments passés par YunoHost
+# 📥 Arguments passés par YunoHost
 app="${1:-}"
 domain="${2:-}"
 path="${3:-}"
 is_public="${4:-1}"
 
-# ✅ Vérification que les arguments sont bien fournis
-if [ -z "$app" ]; then
-    ynh_die "❌ Le nom de l'application (arg1) est manquant."
-fi
+# ✅ Vérifications
+[ -z "$app" ] && ynh_die "❌ Le nom de l'application (arg1) est manquant."
+[ -z "$domain" ] && ynh_die "❌ Le domaine (arg2) est manquant."
+[ -z "$path" ] && ynh_die "❌ Le chemin (arg3) est manquant."
 
-if [ -z "$domain" ]; then
-    ynh_die "❌ Le domaine (arg2) est manquant."
-fi
-
-if [ -z "$path" ]; then
-    ynh_die "❌ Le chemin d'URL (arg3) est manquant."
-fi
-
-# 🛠️ Début de l'installation
-ynh_script_progression --message="Installation de Velocio Traces & Spots..."
-
-# 📁 Définir les chemins
+# 📁 Chemins
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# 🔧 Préparer l'arborescence et copier les fichiers
+# 🔧 Copier les fichiers
 ynh_setup_source_tree
 ynh_copy_source "velocio-POI" "$src_dir"
 
-# 🏗️ Créer le dossier utilisateur pour les données persistantes
+# 🏗️ Dossier utilisateur
 user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
-# ⚙️ Enregistrer les paramètres de l'application
+# ⚙️ Enregistrer les paramètres
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
 ynh_app_setting --app="$app" --key="path" --value="$path"
 ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
 
-# 🔐 Gérer l'accès public via le SSO
+# 🔐 Permissions SSO
 if [ "$is_public" = "yes" ]; then
     ynh_permission_update --app "$app" --perm main --allowed all_users
 else
     ynh_permission_update --app "$app" --perm main --protected true
 fi
 
-# 🔄 Générer la configuration Nginx
+# 🔄 Config Nginx
 ynh_nginx_generate_config
 
-# 🔄 Recharger Nginx pour appliquer la nouvelle configuration
+# 🔄 Recharger Nginx
 ynh_service_reload_or_restart nginx
 
-# 🧹 Nettoyer le cache d'installation
+# 🧹 Nettoyer
 ynh_clean_setup
 
-# ✅ Message de succès
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
