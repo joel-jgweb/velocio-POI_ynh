@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Charge les helpers YunoHost pour les fonctions utilitaires
+# Charge les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
@@ -30,7 +30,7 @@ Description=Velocio POI Flask App (YunoHost)
 After=network.target
 
 [Service]
-User=yunohost   # Utilisateur d'exécution. Adapte si besoin (www-data si tu préfères)
+User=yunohost
 WorkingDirectory=${final_path}/velocio-POI/src
 ExecStart=/usr/bin/python3 server.py
 Restart=always
