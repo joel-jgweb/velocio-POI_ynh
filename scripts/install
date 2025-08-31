@@ -12,16 +12,16 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 
 final_path="/var/www/$app"
 
-# Copie le code
+# Copie le code depuis la racine du dépôt YunoHost
 mkdir -p "$final_path"
 cp -a "$PWD/velocio-POI" "$final_path/"
 
-# Installe les dépendances Python
+# Installe les dépendances Python (si requirements.txt existe)
 if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
     pip3 install -r "$final_path/velocio-POI/requirements.txt"
 fi
 
-# Crée le service systemd pour ton app Flask
+# Crée le service systemd pour l'app Flask
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
@@ -30,7 +30,7 @@ After=network.target
 [Service]
 User=yunohost.app
 WorkingDirectory=${final_path}/velocio-POI/src
-ExecStart=/usr/bin/python3 start.py
+ExecStart=/usr/bin/python3 server.py
 Restart=always
 
 [Install]
