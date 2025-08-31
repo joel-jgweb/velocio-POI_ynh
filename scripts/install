@@ -21,7 +21,7 @@ if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
     pip3 install -r "$final_path/velocio-POI/requirements.txt"
 fi
 
-# Crée le service systemd pour Flask
+# Crée le service systemd pour ton app Flask
 cat > /etc/systemd/system/${app}.service <<EOF
 [Unit]
 Description=Velocio POI Flask App (YunoHost)
@@ -41,12 +41,12 @@ systemctl daemon-reload
 systemctl enable ${app}
 systemctl start ${app}
 
-# Génère la config nginx pour proxy_pass
+# Génère la config nginx pour proxy_pass sur le port 5000
 nginx_conf="/etc/nginx/conf.d/${domain}.d/${app}.conf"
 mkdir -p "/etc/nginx/conf.d/${domain}.d"
 cat > "$nginx_conf" <<EOF
 location ${path}/ {
-    proxy_pass http://127.0.0.1:8000/;
+    proxy_pass http://127.0.0.1:5000/;
     proxy_set_header Host \$host;
     proxy_set_header X-Real-IP \$remote_addr;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
