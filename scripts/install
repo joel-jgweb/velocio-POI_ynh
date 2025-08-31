@@ -6,6 +6,12 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
+# Charger les helpers packaging YunoHost
+source _common.sh 2>/dev/null || true
+source ../_common.sh 2>/dev/null || true
+source /usr/share/yunohost/app_helpers.sh 2>/dev/null || true
+source /usr/share/yunohost/app_packaging_helpers.sh 2>/dev/null || true
+
 # Récupérer les paramètres via les variables d'environnement YunoHost
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
@@ -21,9 +27,9 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Copier les fichiers
-ynh_setup_source_tree
-ynh_copy_source "velocio-POI" "$src_dir"
+# Copier les fichiers (remplacer par une copie brute si helpers manquants)
+mkdir -p "$src_dir"
+cp -a ../sources/* "$src_dir/" 2>/dev/null || echo "⚠️ Copie manuelle des fichiers, vérifiez le chemin source"
 
 # Dossier utilisateur
 user_data_dir="/home/yunohost.app/.velocio_poi"
@@ -35,7 +41,7 @@ ynh_app_setting_set --app="$app" --key="path" --value="$path"
 ynh_app_setting_set --app="$app" --key="is_public" --value="$is_public"
 
 # Permissions SSO
-if [ "$is_public" = "yes" ]; then
+if [[ "$is_public" == "yes" || "$is_public" == "1" ]]; then
     ynh_permission_update --app "$app" --perm main --allowed all_users
 else
     ynh_permission_update --app "$app" --perm main --protected true
