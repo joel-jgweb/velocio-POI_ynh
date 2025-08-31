@@ -5,7 +5,6 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
-# Récupérer les paramètres YunoHost
 app=${YNH_APP_INSTANCE_NAME}
 domain=${YNH_APP_ARG_DOMAIN}
 path=${YNH_APP_ARG_PATH}
@@ -16,25 +15,31 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 [ -z "$path" ] && ynh_die "❌ Le chemin est manquant."
 
 final_path="/var/www/$app"
-src_dir="$final_path/velocio-POI"
 
-# Copier les fichiers depuis le bon dossier sources
-mkdir -p "$src_dir"
-cp -a "../sources/." "$src_dir/" || echo "⚠️ Copie manuelle des fichiers, vérifiez le chemin source"
+# Copie le dossier velocio-POI (avec requirements.txt et src/)
+mkdir -p "$final_path"
+cp -a "$PWD/velocio-POI" "$final_path/"
 
+# Installe les dépendances Python si requirements.txt présent
+if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
+    pip3 install -r "$final_path/velocio-POI/requirements.txt"
+fi
+
+# Dossier utilisateur pour tes données
 user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
+# Enregistre les paramètres YunoHost
 ynh_app_setting_set --app="$app" --key="domain" --value="$domain"
 ynh_app_setting_set --app="$app" --key="path" --value="$path"
 ynh_app_setting_set --app="$app" --key="is_public" --value="$is_public"
 
-# Permissions SSO (utiliser le bon argument YunoHost)
-if [[ "$is_public" == "yes" || "$is_public" == "1" ]]; then
-    ynh_permission_update --app "$app" --permission main --public yes
-else
-    ynh_permission_update --app "$app" --permission main --public no
-fi
+# Permissions SSO (optionnel, non bloquant, tu peux commenter cette ligne si toujours KO)
+#if [[ "$is_public" == "yes" || "$is_public" == "1" ]]; then
+#    ynh_permission_update --app "$app" --permission main --public yes || true
+#else
+#    ynh_permission_update --app "$app" --permission main --public no || true
+#fi
 
 ynh_nginx_generate_config
 ynh_service_reload_or_restart nginx
