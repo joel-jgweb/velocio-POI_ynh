@@ -14,9 +14,22 @@ is_public=${YNH_APP_ARG_IS_PUBLIC}
 
 final_path="/var/www/$app"
 
+# DEBUG : Où suis-je et qu'est-ce qui existe ?
+echo "=== DEBUG : PWD = $PWD"
+echo "=== DEBUG : Contenu du dossier courant ==="
+ls -l
+echo "=== DEBUG : Contenu de velocio-POI (si existe) ==="
+ls -l velocio-POI || echo "velocio-POI absent !"
+
 # 1. Copie le code applicatif depuis la racine du dépôt
 mkdir -p "$final_path"
 cp -a "$PWD/velocio-POI" "$final_path/"
+
+# DEBUG : Vérifie la copie
+echo "=== DEBUG : Contenu de $final_path/velocio-POI après copie ==="
+ls -l "$final_path/velocio-POI"
+echo "=== DEBUG : Contenu de $final_path/velocio-POI/src après copie ==="
+ls -l "$final_path/velocio-POI/src" || echo "src absent !"
 
 # 2. Installe les dépendances Python (si requirements.txt existe)
 if [ -f "$final_path/velocio-POI/requirements.txt" ]; then
