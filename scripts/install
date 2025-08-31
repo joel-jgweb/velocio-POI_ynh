@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🔥 Charger les helpers YunoHost (OBLIGATOIRE)
+# 🔥 Charger les helpers YunoHost
 source /usr/share/yunohost/helpers || {
     echo "❌ Impossible de charger les helpers YunoHost."
     exit 1
@@ -12,7 +12,12 @@ domain=$2
 path=$3
 is_public=${4:-1}
 
-# Aller dans le répertoire du dépôt cloné
+# Vérifier que les arguments sont bien passés
+if [ -z "$app" ] || [ -z "$domain" ] || [ -z "$path" ]; then
+    ynh_die "❌ Arguments manquants : app='$app', domain='$domain', path='$path'"
+fi
+
+# Aller dans le répertoire du dépôt
 if [ -z "$YNH_APP_BASEDIR" ] || [ ! -d "$YNH_APP_BASEDIR" ]; then
     ynh_die "❌ YNH_APP_BASEDIR non défini"
 fi
@@ -22,23 +27,23 @@ cd "$YNH_APP_BASEDIR" || ynh_die "❌ Impossible de se déplacer dans $YNH_APP_B
 if [ ! -d "velocio-POI" ]; then
     echo "❌ ERREUR : Dossier velocio-POI introuvable dans $(pwd)"
     ls -la
-    ynh_die "Le code source est manquant. Vérifiez que le dépôt contient le dossier velocio-POI/"
+    ynh_die "Le code source est manquant."
 fi
 
 # Variables
 final_path="/var/www/$app"
 src_dir="$final_path/velocio-POI"
 
-# Nettoyer et créer le dossier cible
+# Nettoyer et créer le dossier
 ynh_secure_remove "$final_path"
 mkdir -p "$final_path"
 
-# Copier le code (pas de git clone !)
+# Copier le code
 cp -r velocio-POI "$src_dir"
 
 # Vérifier requirements.txt
 if [ ! -f "$src_dir/requirements.txt" ]; then
-    ynh_die "❌ requirements.txt introuvable dans $src_dir"
+    ynh_die "❌ requirements.txt introuvable"
 fi
 
 # Créer l’environnement virtuel
@@ -49,19 +54,53 @@ source "$src_dir/venv/bin/activate"
 ynh_script_progression --message="Installation des dépendances Python..."
 pip install --upgrade pip > /dev/null 2>&1
 if ! pip install -r "$src_dir/requirements.txt"; then
-    ynh_die "❌ Échec de l'installation des dépendances Python"
+    ynh_die "❌ Échec de l'installation des dépendances"
 fi
+
+# === 🔧 Créer le fichier uWSGI MANUELLEMENT (nouvelle méthode) ===
+cat << EOF > /etc/uwsgi/apps-available/$app.ini
+[uwsgi]
+project = $app
+base = /var/www/\$project/velocio-POI
+chdir = \$base/src
+module = server:app
+callable = app
+virtualenv = \$base/venv
+master = true
+processes = 2
+socket = /run/uwsgi/app/\$project/uwsgi.sock
+chmod-socket = 666
+vacuum = true
+die-on-term = true
+plugin = python3
+EOF
+
+# Activer uWSGI
+ln -sf /etc/uwsgi/apps-available/$app.ini /etc/uwsgi/apps-enabled/$app.ini
+systemctl reload uwsgi
+
+# === 🔧 Créer le vhost Nginx MANUELLEMENT ===
+cat << EOF > /etc/nginx/conf.d/$domain.d/$app.conf
+server {
+    listen 80;
+    server_name $domain;
+
+    location $path/ {
+        include uwsgi_params;
+        uwsgi_pass unix:///run/uwsgi/app/$app/uwsgi.sock;
+        uwsgi_param UWSGI_CHDIR /var/www/$app/velocio-POI/src;
+        uwsgi_param UWSGI_SCRIPT server:app;
+        uwsgi_param UWSGI_PYHOME /var/www/$app/velocio-POI/venv;
+    }
+}
+EOF
+
+# Recharger Nginx
+systemctl reload nginx
 
 # Créer les dossiers utilisateur
 mkdir -p /home/yunohost.app/.velocio_poi/cache
 mkdir -p /home/yunohost.app/.velocio_poi/output
-# Ne pas forcer chown → YunoHost gère les droits
-
-# Configurer uWSGI
-ynh_uwsgi_configure --app_id="$app" --uwsgi_file="etc/uwsgi/apps-available/velocio-poi.ini"
-
-# Configurer Nginx
-ynh_nginx_configure --domain="$domain" --app_id="$app" --path="$path" --conf_file="conf/nginx.conf"
 
 # Enregistrer les paramètres
 ynh_app_setting --app="$app" --key="domain" --value="$domain"
