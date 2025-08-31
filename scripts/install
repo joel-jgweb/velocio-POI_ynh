@@ -6,11 +6,11 @@ source /usr/share/yunohost/helpers || {
     exit 1
 }
 
-# Arguments
-app="${1:-}"
-domain="${2:-}"
-path="${3:-}"
-is_public="${4:-yes}"
+# Récupérer les paramètres via YunoHost
+app=$YNH_APP_INSTANCE_NAME
+domain=$(ynh_app_setting_get --app=$app --key=domain)
+path=$(ynh_app_setting_get --app=$app --key=path)
+is_public=$(ynh_app_setting_get --app=$app --key=is_public)
 
 # Vérifications
 [ -z "$app" ] && ynh_die "❌ Le nom de l'application (arg1) est manquant."
@@ -30,9 +30,9 @@ user_data_dir="/home/yunohost.app/.velocio_poi"
 mkdir -p "$user_data_dir"
 
 # Paramètres
-ynh_app_setting --app="$app" --key="domain" --value="$domain"
-ynh_app_setting --app="$app" --key="path" --value="$path"
-ynh_app_setting --app="$app" --key="is_public" --value="$is_public"
+ynh_app_setting_set --app="$app" --key="domain" --value="$domain"
+ynh_app_setting_set --app="$app" --key="path" --value="$path"
+ynh_app_setting_set --app="$app" --key="is_public" --value="$is_public"
 
 # Permissions SSO
 if [ "$is_public" = "yes" ]; then
@@ -49,4 +49,3 @@ ynh_service_reload_or_restart nginx
 ynh_clean_setup
 
 echo "✅ Velocio Traces & Spots installé avec succès sur http://$domain$path"
-EOF
